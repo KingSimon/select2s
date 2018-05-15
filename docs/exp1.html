@@ -1,0 +1,157 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>案例1</title>
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@4.0.0/dist/css/bootstrap.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/select2@4.0.6-rc.1/dist/css/select2.css"/>
+    <link rel="stylesheet" href="../src/select2s.css"/>
+    <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/jquery.nicescroll@3.7.6/jquery.nicescroll.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/select2@4.0.6-rc.1/dist/js/select2.js"></script>
+    <script type="text/javascript" src="../src/select2s.js"></script>
+    <script type="text/javascript" src="data.test.js"></script>
+    <style>
+        .hide {
+            display: none;
+        }
+
+        .select2-results-item img {
+            width: 20px;
+            margin-right: 5px
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <h4>分组不可选,自定义内容</h4>
+            <select id="s2s_1" class="col-md-12"></select>
+        </div>
+        <div class="col-md-4">
+            <h4>分组可选，替换滚动条</h4>
+            <select id="s2s_2" class="col-md-12"></select>
+        </div>
+        <div class="col-md-4">
+            <h4>多选，替换滚动条</h4>
+            <select id="s2s_3" class="col-md-12" multiple></select>
+        </div>
+    </div>
+
+</div>
+<script>
+    $(function () {
+        var tranS2SDATA = function (data, idKey, textKey) {
+            return $.map(data, function (item) {
+                return {
+                    id: item[idKey],
+                    text: item[textKey],
+                    data: item,
+                }
+            })
+        };
+
+
+        $('#s2s_1').select2s({
+            grouping: function (results) {
+                var $options = [];
+                var _newList = {};
+
+                for (var d = 0; d < results.length; d++) {
+                    var item = results[d];
+                    var type = item.data.type;
+                    if (!_newList[type]) {
+                        _newList[type] = {
+                            id: null,
+                            text: type,
+                            children: []
+                        }
+                    }
+                    _newList[type].children.push(item);
+                }
+
+                for (var key in _newList) {
+                    var item = _newList[key];
+                    var $option = this.option(item);
+                    $options.push($option);
+                }
+                return $options
+            },
+            templateResult: function (result) {
+                if (result.data) {
+                    var status = result.data.status;
+                    var strHtml = '<span class="select2-results-item"><img src="img/p' + status + '.png"><b>' + result.text + '</b></span>';
+                    return $(strHtml).get(0);
+                } else {
+                    return result.text;
+                }
+            },
+            data: tranS2SDATA(data_user, 'id', 'name'),
+            minimumResultsForSearch: 0,
+            placeholder: '请选择',
+            allowClear: false,
+            language: 'zh_CN'
+        });
+
+        $('#s2s_2,#s2s_3').select2s({
+            grouping: function (results) {
+                var $options = [];
+                var _newList = {};
+                for (var d = 0; d < results.length; d++) {
+                    var item = results[d];
+                    if (item.id.toString().slice(-2) === '00' || item.id.toString() === '-1') {
+                        item.children = [];
+                        _newList[item.id.toString()] = item;
+                    }
+                }
+
+                for (var d = 0; d < results.length; d++) {
+                    var item = results[d];
+                    if (item.id.toString().slice(-2) !== '00') {
+                        var parentId = item.id.toString().slice(0, -2) + '00';
+                        if (_newList[parentId]) {
+                            _newList[parentId].children.push(item);
+                        }
+                    }
+                }
+
+                for (var d = 0; d < results.length; d++) {
+                    var item = results[d];
+                    if (item.id.toString().slice(-2) === '00' || item.id.toString() === '-1') {
+                        var item = _newList[item.id.toString()];
+                        var $option = this.option(item);
+                        $options.push($option);
+                    }
+                }
+
+                return $options;
+            },
+            data: tranS2SDATA(data_addvcd, 'addvcd', 'addvnm'),
+            minimumResultsForSearch: 0,
+            placeholder: '请选择',
+            allowClear: false,
+            language: 'zh_CN'
+        });
+
+        //替换滚动条
+        $('#s2s_2,#s2s_3').each(function (key, item) {
+            $(item).data('select2').on('open', function () {
+                if ($.fn.niceScroll) {
+                    this.$dropdown.find('.select2-results ul').niceScroll({
+                        autohidemode: false,
+                        styler: 'fb',
+                        cursorcolor: '#509fed',
+                        cursorwidth: '6',
+                        cursorborderradius: '15px',
+                        background: '#6c6c6c',
+                        cursorborder: '',
+                        zindex: '99990'
+                    });
+                }
+            });
+        });
+
+    });
+</script>
+</body>
+</html>
